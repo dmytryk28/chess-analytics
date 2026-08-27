@@ -1,0 +1,69 @@
+name: Daily Chess Pipeline
+
+on:
+  schedule:
+    - cron: '0 6 * * *'  # 06:00 UTC = 09:00 Kyiv (EEST)
+  workflow_dispatch:  # allows manual triggering from the Actions tab
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Stockfish
+        run: sudo apt-get update && sudo apt-get install -y stockfish
+
+      - name: Write GCP service account key
+        run: echo '${{ secrets.GCP_SA_KEY }}' > service-account-key.json
+
+      - name: Write dbt profiles.yml
+        run: |
+          mkdir -p chess_analytics_dbt
+          cat > chess_analytics_dbt/profiles.yml << EOF
+          chess_analytics_dbt:
+            target: prod
+            outputs:
+              prod:
+                type: bigquery
+                method: service-account
+                project: ${{ secrets.GCP_PROJECT_ID }}
+                dataset: staging
+                keyfile: ../service-account-key.json
+                location: EU
+                threads: 4
+          EOF
+
+      - name: Write .env
+        run: |
+          cat > .env << EOF
+          GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }}
+          GCP_SA_KEY_PATH=./service-account-key.json
+          CHESSCOM_USERNAME=${{ secrets.CHESSCOM_USERNAME }}
+          LICHESS_USERNAME=unused
+          TIMEZONE=Europe/Kyiv
+          DAILY_BOUNDARY_HOUR=9
+          STOCKFISH_PATH=stockfish
+          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+          TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }}
+          EOF
+
+      - name: Compile dbt manifest
+        run: |
+          cd chess_analytics_dbt
+          dbt deps || true
+          dbt compile
+
+      - name: Run Dagster job
+        run: dagster job execute -f orchestration/definitions.py -j daily_incremental_job
