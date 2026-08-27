@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chess Report — {{ report_date }}</title>
+<style>
+    body {
+        font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+        max-width: 700px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #fafafa;
+        color: #222;
+        transition: background-color 0.3s, color 0.3s;
+    }
+    h1 { font-size: 22px; }
+    h2 {
+        font-size: 20px;
+        margin-top: 0;
+        margin-bottom: 16px;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .badges {
+        margin-left: auto;
+        display: flex;
+        gap: 8px;
+    }
+    .summary {
+        background: #fff;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 16px;
+        border: 1px solid #e0e0e0;
+    }
+    .game-block {
+        background: #fff;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 20px;
+        border: 1px solid #e0e0e0;
+    }
+    .result-badge, .color-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border: 1px solid transparent;
+    }
+    .result-win { background-color: #d4edda; color: #155724; }
+    .result-draw { background-color: #fff3cd; color: #856404; }
+    .result-loss { background-color: #f8d7da; color: #721c24; }
+
+    .color-white { background-color: #fff; color: #000; border-color: #ccc; }
+    .color-black { background-color: #000; color: #fff; border-color: #000; }
+
+    .move-block {
+        margin: 20px 0;
+        padding-top: 20px;
+        border-top: 1px dashed #ddd;
+    }
+    .move-block:first-of-type {
+        border-top: none;
+        padding-top: 0;
+        margin-top: 0;
+    }
+    .move-header {
+        font-weight: 600;
+        font-size: 18px;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .loss-badge {
+        display: inline-block;
+        background-color: #fee2e2;
+        color: #b91c1c;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 700;
+    }
+    .board-svg svg {
+        display: block;
+        margin: 12px 0;
+        width: 100%;
+        max-width: 350px;
+        height: auto;
+        justify-self: center;
+        border-radius: 4px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .commentary { line-height: 1.5; font-size: 16px; margin-top: 12px; }
+
+    @media (prefers-color-scheme: dark) {
+        body { background: #121212; color: #e0e0e0; }
+        h2 { border-bottom-color: #333; }
+        .summary, .game-block { background: #1e1e1e; border-color: #333; }
+        .move-block { border-top-color: #333; }
+
+        .result-win { background-color: #14532d; color: #86efac; }
+        .result-draw { background-color: #713f12; color: #fef08a; }
+        .result-loss { background-color: #7f1d1d; color: #fca5a5; }
+
+        .color-white { background-color: #d4d4d4; color: #000; border-color: #d4d4d4; }
+        .color-black { background-color: #000; color: #d4d4d4; border-color: #555; }
+
+        .loss-badge { background-color: #7f1d1d; color: #fca5a5; }
+
+        .board-svg svg { box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+    }
+</style>
+</head>
+<body>
+
+<h1>Chess Report — {{ report_date }}</h1>
+
+<div class="summary">
+    <strong>{{ games|length }}</strong> game{% if games|length != 1 %}s{% endif %} analyzed,
+    <strong>{{ total_flagged_moves }}</strong> mistake{% if total_flagged_moves != 1 %}s{% endif %} flagged
+</div>
+
+{% for game in games %}
+<div class="game-block">
+    <h2>
+        Vs {{ game.opponent_username }}
+        <div class="badges">
+            <span class="result-badge result-{{ game.my_result }}">{{ game.my_result }}</span>
+            <span class="color-badge color-{{ game.my_color }}">{{ game.my_color }}</span>
+        </div>
+    </h2>
+
+    {% for move in game.moves %}
+    <div class="move-block">
+        <div class="move-header">
+            <span>Move {{ move.move_number }}: played <strong>{{ move.played_move }}</strong>, best was <strong>{{ move.best_move_san }}</strong></span>
+            <span class="loss-badge">−{{ move.win_pct_loss }}% win chance</span>
+        </div>
+        <div class="board-svg">{{ move.board_svg|safe }}</div>
+        <div class="commentary">{{ move.commentary|safe }}</div>
+    </div>
+    {% endfor %}
+</div>
+{% endfor %}
+
+</body>
+</html>

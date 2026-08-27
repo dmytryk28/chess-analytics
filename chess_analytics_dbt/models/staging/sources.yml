@@ -1,0 +1,14 @@
+version: 2
+
+sources:
+  - name: raw
+    dataset: raw
+    tables:
+      - name: raw_lichess_games
+        description: Raw Lichess API game exports, one JSON payload per row.
+      - name: raw_chesscom_games
+        description: Raw Chess.com API game exports, one JSON payload per row.
+        config:
+          meta:
+            dagster:
+              asset_key: [ "raw_chesscom_games_daily" ]

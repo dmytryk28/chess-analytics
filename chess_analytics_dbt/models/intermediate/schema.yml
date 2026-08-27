@@ -1,0 +1,30 @@
+version: 2
+
+models:
+  - name: int_games_unified
+    description: Unified games from Lichess and Chess.com
+    columns:
+      - name: game_id
+        tests:
+          - not_null
+          - unique
+      - name: platform
+        tests:
+          - accepted_values:
+              values: [ 'lichess', 'chesscom' ]
+  - name: int_games_enriched
+    description: Unified games with player-perspective fields (my color, my rating...).
+    columns:
+      - name: game_id
+        tests:
+          - not_null
+          - unique
+      - name: my_color
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['white', 'black']
+      - name: my_result
+        tests:
+          - accepted_values:
+              values: ['win', 'loss', 'draw']

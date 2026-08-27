@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: analysis
+    dataset: analysis
+    tables:
+      - name: move_analysis
+        description: Complete per-move analysis (Stockfish evaluation + Gemini commentary), written by the Dagster pipeline

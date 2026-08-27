@@ -1,0 +1,56 @@
+version: 2
+
+models:
+  - name: fct_games
+    description: Games from the player's perspective
+    columns:
+      - name: game_id
+        tests:
+          - not_null
+          - unique
+      - name: my_result
+        tests:
+          - accepted_values:
+              values: ['win', 'loss', 'draw']
+
+  - name: dim_openings
+    description: Chess openings - ECO code, name, number of games played
+
+  - name: dim_openings_short
+    description: Chess openings with distinct ECOs and the shortest names
+    columns:
+      - name: eco
+        tests:
+          - unique
+
+  - name: dim_time_controls
+    description: Maps each initial time to its category
+    columns:
+      - name: time_control_initial_seconds
+        tests:
+          - not_null
+          - unique
+
+  - name: dim_date
+    description: One row per date when at least one game was played. day_of_week is Monday=1...Sunday=7
+    columns:
+      - name: date_day
+        tests:
+          - not_null
+          - unique
+      - name: day_of_week
+        tests:
+          - not_null
+          - accepted_values:
+              values: [1, 2, 3, 4, 5, 6, 7]
+              quote: false
+
+  - name: mart_opening_performance
+    description: Win rate and game count per opening by color played
+    columns:
+      - name: opening_name
+        tests:
+          - not_null
+
+  - name: mart_time_of_day_performance
+    description: Win rate broken down by hour of day and day of week

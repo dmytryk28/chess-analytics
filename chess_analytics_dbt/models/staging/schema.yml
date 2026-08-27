@@ -1,0 +1,38 @@
+version: 2
+
+models:
+  - name: stg_lichess_games
+    description: Lichess games - one row per game, raw and normalized fields side by side.
+    columns:
+      - name: game_id
+        tests:
+          - not_null
+          - unique
+      - name: white_result
+        tests:
+          - accepted_values:
+              values: ['win', 'loss', 'draw']
+      - name: black_result
+        tests:
+          - accepted_values:
+              values: ['win', 'loss', 'draw']
+
+  - name: stg_chesscom_games
+    description: Chess.com games - one row per game, raw and normalized fields side by side.
+    columns:
+      - name: game_id
+        tests:
+          - not_null
+          - unique
+      - name: white_result
+        tests:
+          - accepted_values:
+              values: ['win', 'loss', 'draw']
+              config:
+                severity: warn
+      - name: black_result
+        tests:
+          - accepted_values:
+              values: ['win', 'loss', 'draw']
+              config:
+                severity: warn

@@ -1,0 +1,15 @@
+.idea/
+.env
+chess-analytics.json
+data/
+venv/
+__pycache__/
+*.pyc
+orchestration/backfill_time_utils.py
+logs/
+.tmp_dagster_home*/
+.DS_Store
+Thumbs.db
+chess_analytics_dbt/target/
+chess_analytics_dbt/dbt_packages/
+chess_analytics_dbt/logs/
