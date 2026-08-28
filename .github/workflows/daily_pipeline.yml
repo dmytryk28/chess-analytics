@@ -1,8 +1,6 @@
 name: Daily Chess Pipeline
 
 on:
-  schedule:
-    - cron: '0 6 * * *'  # 06:00 UTC = 09:00 Kyiv (EEST)
   workflow_dispatch:  # allows manual triggering from the Actions tab
 
 jobs:
