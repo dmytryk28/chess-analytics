@@ -2,7 +2,7 @@ from dagster import asset, RetryPolicy, AssetExecutionContext
 from extractors.chesscom_client import fetch_chesscom_games_daily
 from extractors.bigquery_loader import run_query, load_rows_to_bigquery
 from analysis.stockfish_runner import analyze_game
-from analysis.gemini_summarizer import summarize_mistake
+from analysis.gemini_summarizer import summarize_mistakes_batch
 from orchestration.resources import BigQueryResource
 from dagster_dbt import dbt_assets, DbtCliResource
 from orchestration.dbt_assets import dbt_project
@@ -72,33 +72,64 @@ def stockfish_analysis(context: AssetExecutionContext) -> list[dict]:
 
 @asset(deps=[stockfish_analysis], group_name="analysis")
 def gemini_summaries(context: AssetExecutionContext, stockfish_analysis: list[dict]) -> None:
-    """Generate an explanation for each mistake flagged by Stockfish today,
+    """Generate an explanation for each mistake flagged by Stockfish today using batches of 10,
     merge it with the move data, and write a row per mistake to BigQuery"""
     if not stockfish_analysis:
         context.log.info("No flagged moves. Skip Gemini")
         return
-    context.log.info(f"Summarizing {len(stockfish_analysis)} flagged moves")
 
-    complete_rows = []
-    for move in stockfish_analysis:
+    sorted_moves = sorted(stockfish_analysis, key=lambda x: x.get("win_pct_loss", 0), reverse=True)
+
+    prepared_moves = []
+    for move in sorted_moves:
         board = chess.Board(move["fen_before"])
         played_move_obj = board.parse_san(move["played_move"])
         best_move_obj = chess.Move.from_uci(move["best_move"])
 
-        commentary = summarize_mistake(
-            fen_before=move["fen_before"],
-            played_move_san=move["played_move"],
-            played_move_uci=played_move_obj.uci(),
-            best_move_san=board.san(best_move_obj),
-            best_move_uci=move["best_move"],
-            win_pct_loss=move["win_pct_loss"]
-        )
-        complete_rows.append({**move, "commentary": commentary})
+        prepared_moves.append({
+            **move,
+            "played_move_san": move["played_move"],
+            "played_move_uci": played_move_obj.uci(),
+            "best_move_san": board.san(best_move_obj),
+            "best_move_uci": move["best_move"]
+        })
 
-    rows_loaded = load_rows_to_bigquery(
-        complete_rows, schema=MOVE_ANALYSIS_SCHEMA, dataset="analysis", table="move_analysis"
-    )
-    context.add_output_metadata({"rows_written": rows_loaded})
+    BATCH_SIZE = 10
+    total_rows_loaded = 0
+
+    for i in range(0, len(prepared_moves), BATCH_SIZE):
+        batch = prepared_moves[i:i + BATCH_SIZE]
+        batch_num = i // BATCH_SIZE + 1
+
+        try:
+            analyzed_batch = summarize_mistakes_batch(batch)
+        except Exception as e:
+            context.log.error(f"Gemini API error on batch {batch_num}: {e}")
+            if total_rows_loaded > 0:
+                context.log.warning(
+                    f"Stopping Gemini requests but proceeding to report generation "
+                    f"with {total_rows_loaded}/{len(prepared_moves)} moves."
+                )
+                break
+            else:
+                context.log.error("Failed on the first batch. No data to report.")
+                raise e
+
+        batch_rows = []
+        for item in analyzed_batch:
+            item.pop("played_move_san", None)
+            item.pop("played_move_uci", None)
+            item.pop("best_move_san", None)
+            item.pop("best_move_uci", None)
+            batch_rows.append(item)
+
+        loaded = load_rows_to_bigquery(
+            batch_rows, schema=MOVE_ANALYSIS_SCHEMA, dataset="analysis", table="move_analysis"
+        )
+        total_rows_loaded += loaded
+        context.log.info(f"Saved {loaded} rows to BigQuery for batch {batch_num}")
+
+    context.add_output_metadata({"rows_written": total_rows_loaded})
 
 
 @asset(deps=[gemini_summaries], group_name="reporting")
