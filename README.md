@@ -134,7 +134,9 @@ chess-analytics/
 
 ## Power BI report
 
-Dashboard screanshot:
+Built on the full 5-year history from `marts`: overall win/draw/loss breakdown, a rating trend split by platform, and a closer look at when and how I actually play well — win rate by opening and color, activity and win rate by hour of day, and a day-of-week × hour heatmap for spotting my best and worst times to play.
+
+Dashboard screenshot:
 
 ![Chess Analytics Power BI Report](images/chess_analytics_power_bi_report.png)
 
