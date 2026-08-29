@@ -134,7 +134,8 @@ chess-analytics/
 
 ## Power BI report
 
-Sample dashboard:
+Dashboard screanshot:
 
+![Chess Analytics Power BI Report](images/chess_analytics_power_bi_report.png)
 
-
+[PBIX-file](power_bi/chess-analytics.pbix) for download.
