@@ -75,7 +75,7 @@ erDiagram
         string game_id PK
         string platform
         timestamp played_at
-        date played_date
+        date played_date FK
         string eco FK
         int time_control_initial_seconds FK
         int time_control_increment_seconds
