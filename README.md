@@ -110,7 +110,7 @@ erDiagram
 
 `fct_games` also feeds two pre-aggregated marts: `mart_opening_performance` (win rate per opening, per color) and `mart_time_of_day_performance` (win rate per hour/weekday).
 
-**Full interactive lineage graph** can be browsed here.
+**[Full dbt docs](https://dmytryk28.github.io/chess-analytics/dbt-docs/#!/overview)** — click the cyan icon on the bottom-right corner to view **the lineage graph**.
 
 ## Repository structure
 
@@ -136,5 +136,5 @@ chess-analytics/
 
 Sample dashboard:
 
-<img width="1629" height="922" alt="chess_analytics_power_bi_report" src="https://github.com/user-attachments/assets/e8108f41-b662-4445-bbcc-15cfbc238c01" />
+
 
