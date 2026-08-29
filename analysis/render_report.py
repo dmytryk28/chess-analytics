@@ -1,4 +1,5 @@
 import re
+import os
 from pathlib import Path
 from datetime import date
 import chess
@@ -46,6 +47,8 @@ def render_daily_report(report_date: date, games: list[dict], output_path: str) 
         games=games,
         total_flagged_moves=total_flagged_moves,
     )
+
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(html)
