@@ -126,12 +126,15 @@ chess-analytics/
 
 ## Some engineering decisions
 
-- **`raw` tables are schema-on-read.** A single JSON string column, regardless of source. Field-name collisions and type drift between two very different APIs are handled entirely in dbt, not in ingestion code.
+- **`raw` tables are schema-on-read.** A single JSON string column, regardless of source. Field-name collisions and type drift between two different APIs are handled entirely in dbt.
 - **The daily job only rebuilds `fct_games`**, not the full marts layer — `dbt_select="+fct_games"` keeps the daily run fast, since Power BI's historical marts don't need a daily refresh.
 - **Gemini requests are batched per run**, since the free tier's tightest limit is requests/day — turning dozens of per-move calls into a handful. Falls back across model versions if a quota is still hit.
-- **Flagged moves are sorted by win% loss before batching**, so the biggest mistakes are analyzed first — if a batch fails partway through, the worst mistakes are still saved.
+- **Flagged moves are sorted by win% loss before batching**, so the biggest mistakes are analyzed first — if a batch fails partway through, the worst mistakes analysis is still saved.
 - **Stockfish and Gemini results are merged into one row per move** before writing to BigQuery, appended in batches to a single shared table — avoiding a separate insert-then-update step and the multiple join for report creating.
 
-## Sample dashboard
+## Power BI report
 
-*(Power BI screenshot here)*
+Sample dashboard:
+
+<img width="1629" height="922" alt="chess_analytics_power_bi_report" src="https://github.com/user-attachments/assets/e8108f41-b662-4445-bbcc-15cfbc238c01" />
+
